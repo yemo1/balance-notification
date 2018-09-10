@@ -1,0 +1,42 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace DailyNotification
+{
+    public class ScheduleTask
+    {
+        private static ScheduleTask _instance;
+        private List<Timer> timers = new List<Timer>();
+
+        private ScheduleTask() { }
+
+        public static ScheduleTask Instance => _instance ?? (_instance = new ScheduleTask());
+
+        public void TaskScheduler(int hour, int min, double intervalInHour, Action task)
+        {
+            DateTime now = DateTime.UtcNow;
+            DateTime firstRun = new DateTime(now.Year, now.Month, now.Day, hour, min, 0, 0);
+            if (now > firstRun)
+            {
+                firstRun = firstRun.AddDays(1);
+            }
+
+            TimeSpan timeToGo = firstRun - now;
+            if (timeToGo <= TimeSpan.Zero)
+            {
+                timeToGo = TimeSpan.Zero;
+            }
+
+            var timer = new Timer(x =>
+            {
+                task.Invoke();
+            }, null, timeToGo, TimeSpan.FromHours(intervalInHour));
+
+            timers.Add(timer);
+        }
+    }
+}
